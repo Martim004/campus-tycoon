@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f1e9">
+    <meta name="description" content="Run a tiny campus café. Buy stock, set prices, and see how five trading days add up.">
+    <title>Campus Café — Campus Tycoon</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Campus Café home">
+          <span class="brand-mark" aria-hidden="true">cc</span>
+          <span>Campus <strong>Café</strong></span>
+        </a>
+        <div class="topbar-note"><span class="status-dot"></span> A five-day business sim</div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">YOUR LITTLE CORNER OF CAMPUS</p>
+            <h1 id="page-title">Make each day <em>count.</em></h1>
+            <p class="intro-copy">Stock the counter, choose your prices, and see what the campus buys. You have five trading days to grow your €100.</p>
+          </div>
+          <div class="day-stamp" aria-label="Trading day">
+            <span class="stamp-label">NOW SERVING</span>
+            <strong id="day-label">DAY 1</strong>
+            <div class="day-track" id="day-track" aria-label="0 of 5 days completed"></div>
+          </div>
+        </section>
+
+        <section class="stats" aria-label="Run summary">
+          <article class="stat-card"><span class="stat-label">CASH IN TILL</span><strong id="cash-value">€100.00</strong><span class="stat-hint">Ready to invest</span></article>
+          <article class="stat-card"><span class="stat-label">STOCK ON HAND</span><strong id="stock-value">0 <small>units</small></strong><span class="stat-hint">Across your whole menu</span></article>
+          <article class="stat-card"><span class="stat-label">RUNNING RESULT</span><strong id="result-value">€0.00</strong><span class="stat-hint">Cash + stock at cost</span></article>
+          <button class="text-button" id="new-run-button" type="button">↻ &nbsp; Start a new run</button>
+        </section>
+
+        <div class="workspace">
+          <section class="menu-panel panel" aria-labelledby="menu-heading">
+            <div class="section-heading">
+              <div><p class="eyebrow">TODAY’S MENU</p><h2 id="menu-heading">Your counter</h2></div>
+              <span class="menu-count">3 ITEMS</span>
+            </div>
+            <p class="panel-intro">Buy stock at cost, then set the price you’ll charge.</p>
+            <div class="product-list" id="product-list"></div>
+            <div class="demand-note"><span class="note-icon" aria-hidden="true">↗</span><p><strong>How demand works</strong><br>At or below reference price: 10 wanted. Up to 2× reference: 5 wanted. Above 2×: none.</p></div>
+          </section>
+
+          <aside class="side-column">
+            <section class="trade-panel" aria-labelledby="trade-heading">
+              <div class="trade-top"><p class="eyebrow">READY WHEN YOU ARE</p><span class="open-badge" id="open-badge"><i></i> NOT TRADING</span></div>
+              <h2 id="trade-heading">Open for the day?</h2>
+              <p id="trade-copy">Your prices are set and your stock is ready. See how the day goes.</p>
+              <button class="primary-button" id="trade-button" type="button">Open for today <span aria-hidden="true">→</span></button>
+            </section>
+            <section class="history-panel panel" aria-labelledby="history-heading">
+              <div class="section-heading compact"><div><p class="eyebrow">THE STORY SO FAR</p><h2 id="history-heading">Daily results</h2></div><span id="history-count" class="history-count">0 / 5</span></div>
+              <div id="history-list" class="history-list"><p class="empty-state">Your first trading day is waiting.</p></div>
+            </section>
+          </aside>
+        </div>
+
+        <section class="final-panel panel" id="final-panel" hidden aria-live="polite">
+          <div class="final-icon" aria-hidden="true">✦</div>
+          <div><p class="eyebrow">THAT’S A WRAP</p><h2 id="final-heading">Five days, one little café.</h2><p id="final-copy"></p></div>
+          <div class="final-number"><span>FINAL RESULT</span><strong id="final-result">€0.00</strong></div>
+        </section>
+        <p class="save-note"><span aria-hidden="true">✓</span> Your run saves automatically on this device.</p>
+      </main>
+      <footer><span>Campus Tycoon</span><span>Small decisions. Five big days.</span></footer>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+  </body>
+</html>
