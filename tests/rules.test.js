@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CAMPUS_EVENTS, PRODUCTS, STARTING_CASH, buyStock, campusEventFor, createNewRun, demandFor, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, tradeDay } from "../rules.js";
+import { CAMPUS_EVENTS, PRODUCTS, STARTING_CASH, buyStock, campusEventFor, createNewRun, demandFor, expectedDemandFor, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, tradeDay } from "../rules.js";
 
 const byId = (name) => PRODUCTS.find((product) => product.id === name);
 
@@ -19,20 +19,36 @@ test("A2: purchases update cash and stock together and reject unaffordable purch
   assert.equal(run.stock.bar, 0);
 });
 
-test("price tiers preserve full, half, and zero demand at their boundaries", () => {
+test("price sensitivity changes smoothly and discounts have a capped demand lift", () => {
   const reference = 400;
-  assert.deepEqual([400, 401, 800, 801].map((price) => demandFor(price, reference)), [10, 5, 5, 0]);
+  const expected = [400, 401, 440, 480, 800, 1_600].map((price) => expectedDemandFor(price, reference));
+  assert.equal(expected[0], 10);
+  assert.ok(expected[1] < expected[0]);
+  assert.ok(expected[2] < expected[1]);
+  assert.ok(expected[3] < expected[2]);
+  assert.ok(expected[4] < expected[3]);
+  assert.equal(expected[5], 0.625);
+  assert.deepEqual([400, 440, 480, 800].map((price) => demandFor(price, reference)), [10, 8, 7, 3]);
+  assert.equal(expectedDemandFor(200, reference), 20);
+  assert.equal(expectedDemandFor(100, reference), 20);
   assert.equal(parseEuroAmount("0"), null);
   assert.equal(parseEuroAmount("-1"), null);
   assert.equal(parseEuroAmount("4.001"), null);
   assert.equal(parseEuroAmount("4,01"), 401);
 });
 
-test("live price preview reflects today's event, stock, and gross profit", () => {
+test("live price preview shows smooth expected demand and stock-adjusted profit", () => {
   const gymRush = CAMPUS_EVENTS.find(({ id }) => id === "gym-rush");
-  assert.deepEqual(previewProduct("shake", 500, 3, gymRush), { demand: 16, sellable: 3, revenue: 1_500, grossProfit: 750 });
-  assert.deepEqual(previewProduct("shake", 501, 20, gymRush), { demand: 8, sellable: 8, revenue: 4_008, grossProfit: 2_008 });
-  assert.deepEqual(previewProduct("shake", 1_001, 10, gymRush), { demand: 0, sellable: 0, revenue: 0, grossProfit: 0 });
+  const reference = previewProduct("shake", 500, 3, gymRush);
+  assert.equal(reference.demand, 16);
+  assert.equal(reference.expectedDemand, 16);
+  assert.equal(reference.sellable, 3);
+  assert.equal(reference.expectedSellable, 3);
+  assert.equal(reference.revenue, 1_500);
+  assert.equal(reference.grossProfit, 750);
+  assert.equal(previewProduct("shake", 501, 20, gymRush).expectedDemand < 16, true);
+  assert.equal(previewProduct("shake", 1_000, 10, gymRush).demand, 4);
+  assert.equal(previewProduct("shake", 5_000, 10, gymRush).demand, 0);
 });
 
 test("every new run contains all five campus events in a stored shuffled order", () => {
