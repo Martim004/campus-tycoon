@@ -4,17 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f1e9">
-    <meta name="description" content="Run a tiny campus café. Buy stock, set prices, and see how five trading days add up.">
-    <title>Campus Café — Campus Tycoon</title>
+    <meta name="description" content="Run a campus sports nutrition store. Forecast demand, buy stock, set prices, and grow your business over five days.">
+    <title>Campus Fuel — Campus Tycoon</title>
     <link rel="stylesheet" href="./styles.css">
     <script type="module" src="./app.js"></script>
   </head>
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="./" aria-label="Campus Café home">
-          <span class="brand-mark" aria-hidden="true">cc</span>
-          <span>Campus <strong>Café</strong></span>
+        <a class="brand" href="./" aria-label="Campus Fuel home">
+          <span class="brand-mark" aria-hidden="true">cf</span>
+          <span>Campus <strong>Fuel</strong></span>
         </a>
         <div class="topbar-note"><span class="status-dot"></span> A five-day business sim</div>
       </header>
@@ -22,20 +22,20 @@
       <main>
         <section class="intro" aria-labelledby="page-title">
           <div>
-            <p class="eyebrow">YOUR LITTLE CORNER OF CAMPUS</p>
-            <h1 id="page-title">Make each day <em>count.</em></h1>
-            <p class="intro-copy">Stock the counter, choose your prices, and see what the campus buys. You have five trading days to grow your €100.</p>
+            <p class="eyebrow">YOUR CAMPUS SPORTS NUTRITION SHOP</p>
+            <h1 id="page-title">Fuel the <em>week.</em></h1>
+            <p class="intro-copy">Read the campus pulse, stock the shelves, and set your prices. You have five trading days to grow your €100.</p>
           </div>
           <div class="day-stamp" aria-label="Trading day">
-            <span class="stamp-label">NOW SERVING</span>
+            <span class="stamp-label">CAMPUS PULSE</span>
             <strong id="day-label">DAY 1</strong>
             <div class="day-track" id="day-track" aria-label="0 of 5 days completed"></div>
           </div>
         </section>
 
         <section class="stats" aria-label="Run summary">
-          <article class="stat-card"><span class="stat-label">CASH IN TILL</span><strong id="cash-value">€100.00</strong><span class="stat-hint">Ready to invest</span></article>
-          <article class="stat-card"><span class="stat-label">STOCK ON HAND</span><strong id="stock-value">0 <small>units</small></strong><span class="stat-hint">Across your whole menu</span></article>
+          <article class="stat-card"><span class="stat-label">CASH IN REGISTER</span><strong id="cash-value">€100.00</strong><span class="stat-hint">Ready to invest</span></article>
+          <article class="stat-card"><span class="stat-label">INVENTORY ON HAND</span><strong id="stock-value">0 <small>units</small></strong><span class="stat-hint">Across your full range</span></article>
           <article class="stat-card"><span class="stat-label">RUNNING RESULT</span><strong id="result-value">€0.00</strong><span class="stat-hint">Cash + stock at cost</span></article>
           <button class="text-button" id="new-run-button" type="button">↻ &nbsp; Start a new run</button>
         </section>
@@ -43,8 +43,8 @@
         <section class="first-run-guide" id="first-run-guide" aria-labelledby="guide-heading">
           <div class="guide-heading"><div><p class="eyebrow">QUICK START</p><h2 id="guide-heading">Three small steps</h2></div><span class="menu-count">YOUR FIRST RUN</span></div>
           <ol>
-            <li><span class="guide-number">01</span><div><strong>Stock the counter</strong><small>Buy whole units at the listed cost. You start with €100.</small></div></li>
-            <li><span class="guide-number">02</span><div><strong>Choose your prices</strong><small>Check the live demand preview before setting each price.</small></div></li>
+            <li><span class="guide-number">01</span><div><strong>Read the campus pulse</strong><small>A different campus event changes what athletes want each day.</small></div></li>
+            <li><span class="guide-number">02</span><div><strong>Stock and price wisely</strong><small>Buy whole units and use the live demand preview.</small></div></li>
             <li><span class="guide-number">03</span><div><strong>Open for the day</strong><small>Trade once, review the results, then plan the next day.</small></div></li>
           </ol>
         </section>
@@ -52,12 +52,13 @@
         <div class="workspace">
           <section class="menu-panel panel" aria-labelledby="menu-heading">
             <div class="section-heading">
-              <div><p class="eyebrow">TODAY’S MENU</p><h2 id="menu-heading">Your counter</h2></div>
+              <div><p class="eyebrow">SPORTS NUTRITION RANGE</p><h2 id="menu-heading">Your shelves</h2></div>
               <span class="menu-count">3 ITEMS</span>
             </div>
-            <p class="panel-intro">Buy stock at cost, then set the price you’ll charge.</p>
+            <p class="panel-intro">Today’s campus event changes the demand baseline for each product.</p>
+            <div class="campus-pulse" id="campus-pulse" aria-live="polite"></div>
             <div class="product-list" id="product-list"></div>
-            <div class="demand-note"><span class="note-icon" aria-hidden="true">↗</span><p><strong>How demand works</strong><br>At or below reference price: 10 wanted. Up to 2× reference: 5 wanted. Above 2×: none.</p></div>
+            <div class="demand-note"><span class="note-icon" aria-hidden="true">↗</span><p><strong>How price affects demand</strong><br>At or below reference price: full event demand. Up to 2× reference: half demand (rounded up). Above 2×: none.</p></div>
           </section>
 
           <aside class="side-column">
@@ -77,7 +78,7 @@
         <section class="final-panel panel" id="final-panel" hidden aria-live="polite" aria-labelledby="final-heading">
           <header class="final-top">
             <div class="final-icon" aria-hidden="true">✦</div>
-            <div class="final-message"><p class="eyebrow">THAT’S A WRAP</p><h2 id="final-heading">Five days, one little café.</h2><p id="final-copy"></p></div>
+            <div class="final-message"><p class="eyebrow">THAT’S A WRAP</p><h2 id="final-heading">Five days, one campus shop.</h2><p id="final-copy"></p></div>
             <div class="final-number"><span>FINAL RESULT</span><strong id="final-result">€0.00</strong></div>
           </header>
           <div class="final-breakdown" id="final-breakdown"></div>
@@ -93,7 +94,7 @@
         </section>
         <p class="save-note"><span aria-hidden="true">✓</span> Your run saves automatically on this device.</p>
       </main>
-      <footer><span>Campus Tycoon</span><span>Small decisions. Five big days.</span></footer>
+      <footer><span>Campus Tycoon</span><span>Read the pulse. Fuel the campus.</span></footer>
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
     </div>
   </body>
