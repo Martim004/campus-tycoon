@@ -1,4 +1,4 @@
-import { DAYS_IN_RUN, LEGACY_STORAGE_KEYS, PRODUCTS, STARTING_CASH, STORAGE_KEY, buyStock, campusEventFor, createNewRun, formatEuro, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, stockValueAtCost, tradeDay } from "./rules.js";
+import { DAYS_IN_RUN, LEGACY_STORAGE_KEYS, PRODUCTS, STARTING_CASH, STORAGE_KEY, buyStock, campusEventFor, createNewRun, formatEuro, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, stockValueAtCost, tradeDay } from "./rules.js?v=3";
 
 const $ = (selector) => document.querySelector(selector);
 const productList = $("#product-list");
