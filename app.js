@@ -78,7 +78,7 @@ function formatSignedEuro(cents) {
 }
 
 function formatDemand(units) {
-  return units.toFixed(2).replace(/\\.?0+$/, "");
+  return Number(units.toFixed(2)).toString();
 }
 
 function priceForecast(productId, inputValue) {
