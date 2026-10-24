@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PRODUCTS, STARTING_CASH, buyStock, createNewRun, demandFor, overallResult, parseEuroAmount, setPrice, tradeDay } from "../rules.js";
+import { PRODUCTS, STARTING_CASH, buyStock, createNewRun, demandFor, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, tradeDay } from "../rules.js";
 
 const byId = (name) => PRODUCTS.find((product) => product.id === name);
 
@@ -21,6 +21,11 @@ test("A2: reference price and twice-reference boundaries produce 10, 5, 5, and 0
   assert.equal(parseEuroAmount("-1"), null);
   assert.equal(parseEuroAmount("4.001"), null);
   assert.equal(parseEuroAmount("4,01"), 401);
+});
+
+test("live price preview reflects demand, available stock, and gross profit", () => {
+  assert.deepEqual(previewProduct("coffee", 400, 3), { demand: 10, sellable: 3, revenue: 1_200, grossProfit: 600 });
+  assert.deepEqual(previewProduct("coffee", 801, 10), { demand: 0, sellable: 0, revenue: 0, grossProfit: 0 });
 });
 
 test("A3: daily revenue, cost of goods sold, profit, cash, and stock reconcile", () => {
@@ -75,4 +80,26 @@ test("overall gain includes remaining stock at cost, without deducting purchases
   let run = buyStock(createNewRun(), "coffee", 2);
   run = tradeDay(run);
   assert.equal(overallResult(run), 400);
+});
+
+test("saved version 1 runs migrate to the detailed history format without losing progress", () => {
+  let current = buyStock(createNewRun(), "coffee", 10);
+  current = tradeDay(current);
+  const legacy = {
+    ...current,
+    version: 1,
+    history: current.history.map((day) => ({
+      ...day,
+      items: day.items.map(({ productId, demand, sold, revenue, costOfGoodsSold, grossProfit }) => ({ productId, demand, sold, revenue, costOfGoodsSold, grossProfit })),
+    })),
+  };
+  const migrated = migrateRun(legacy);
+  const coffee = migrated.history[0].items.find((item) => item.productId === "coffee");
+  assert.equal(migrated.version, 2);
+  assert.equal(migrated.cash, current.cash);
+  assert.equal(migrated.currentDay, current.currentDay);
+  assert.deepEqual(migrated.stock, current.stock);
+  assert.equal(coffee.sellingPrice, 400);
+  assert.equal(coffee.stockBefore, 10);
+  assert.equal(coffee.stockAfter, 0);
 });
