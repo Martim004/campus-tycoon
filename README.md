@@ -10,7 +10,7 @@ Open `index.html` in a modern browser. The current catalogue, event order, and r
 
 - Start with €100 and no stock.
 - Each new run shuffles five campus events. The event order is saved, so a refresh never changes today's forecast or lets a day be replayed.
-- Every event has a product-specific full-price demand baseline. At or below the reference price, demand equals that baseline; above reference and up to twice reference, demand is half (rounded up); above twice reference, demand is zero.
+- Every event has a product-specific full-price demand baseline. Expected demand responds gradually to price using a constant-elasticity curve: baseline × (reference price ÷ selling price)². Discounts can increase demand up to twice the event baseline, and each day's expected demand rounds to a whole unit for trading.
 - Sales cannot exceed stock. Unsold items carry over to the next day.
 - The five-day final result is cash plus remaining stock at purchase cost, minus the starting €100.
 - Existing café saves are kept in their old browser storage keys; the new store starts with a fresh run because its products and event rules use a different catalogue.
