@@ -40,6 +40,15 @@
           <button class="text-button" id="new-run-button" type="button">↻ &nbsp; Start a new run</button>
         </section>
 
+        <section class="first-run-guide" id="first-run-guide" aria-labelledby="guide-heading">
+          <div class="guide-heading"><div><p class="eyebrow">QUICK START</p><h2 id="guide-heading">Three small steps</h2></div><span class="menu-count">YOUR FIRST RUN</span></div>
+          <ol>
+            <li><span class="guide-number">01</span><div><strong>Stock the counter</strong><small>Buy whole units at the listed cost. You start with €100.</small></div></li>
+            <li><span class="guide-number">02</span><div><strong>Choose your prices</strong><small>Check the live demand preview before setting each price.</small></div></li>
+            <li><span class="guide-number">03</span><div><strong>Open for the day</strong><small>Trade once, review the results, then plan the next day.</small></div></li>
+          </ol>
+        </section>
+
         <div class="workspace">
           <section class="menu-panel panel" aria-labelledby="menu-heading">
             <div class="section-heading">
@@ -65,10 +74,22 @@
           </aside>
         </div>
 
-        <section class="final-panel panel" id="final-panel" hidden aria-live="polite">
-          <div class="final-icon" aria-hidden="true">✦</div>
-          <div><p class="eyebrow">THAT’S A WRAP</p><h2 id="final-heading">Five days, one little café.</h2><p id="final-copy"></p></div>
-          <div class="final-number"><span>FINAL RESULT</span><strong id="final-result">€0.00</strong></div>
+        <section class="final-panel panel" id="final-panel" hidden aria-live="polite" aria-labelledby="final-heading">
+          <header class="final-top">
+            <div class="final-icon" aria-hidden="true">✦</div>
+            <div class="final-message"><p class="eyebrow">THAT’S A WRAP</p><h2 id="final-heading">Five days, one little café.</h2><p id="final-copy"></p></div>
+            <div class="final-number"><span>FINAL RESULT</span><strong id="final-result">€0.00</strong></div>
+          </header>
+          <div class="final-breakdown" id="final-breakdown"></div>
+          <div class="debrief">
+            <div class="debrief-heading"><p class="eyebrow">A LOOK BACK</p><h3>What the week tells you</h3></div>
+            <div class="debrief-metrics" id="debrief-metrics"></div>
+            <p class="debrief-insight" id="debrief-insight"></p>
+          </div>
+          <div class="performance-chart" id="performance-chart" aria-labelledby="performance-heading">
+            <div class="chart-heading"><h3 id="performance-heading">Gross profit by day</h3><span>DAILY TOTAL</span></div>
+            <div id="chart-rows"></div>
+          </div>
         </section>
         <p class="save-note"><span aria-hidden="true">✓</span> Your run saves automatically on this device.</p>
       </main>
