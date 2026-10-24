@@ -77,18 +77,26 @@ function formatSignedEuro(cents) {
   return `${cents > 0 ? "+" : cents < 0 ? "−" : ""}${formatEuro(Math.abs(cents))}`;
 }
 
+function formatDemand(units) {
+  return units.toFixed(2).replace(/\\.?0+$/, "");
+}
+
 function priceForecast(productId, inputValue) {
   const price = parseEuroAmount(inputValue);
   if (price === null) return { text: "Enter a positive price to preview demand.", invalid: true };
   const product = PRODUCTS.find(({ id }) => id === productId);
   const forecast = previewProduct(productId, price, run.stock[productId], campusEventFor(run));
+  const estimate = `${formatDemand(forecast.expectedDemand)} expected units`;
   if (forecast.demand === 0) {
-    return { text: `0 wanted at this price · demand returns at ${formatEuro(product.referencePrice * 2)} or below`, invalid: false };
+    return { text: `${estimate} · rounds to 0 units today`, invalid: false };
   }
-  if (forecast.sellable === 0) {
-    return { text: `${forecast.demand} wanted · no stock available to sell`, invalid: false };
+  if (forecast.expectedSellable === 0) {
+    return { text: `${estimate} · no stock available to meet it`, invalid: false };
   }
-  return { text: `${forecast.demand} wanted · ${forecast.sellable} sellable · ${formatSignedEuro(forecast.grossProfit)} gross`, invalid: false };
+  return {
+    text: `${estimate} · ${formatDemand(forecast.expectedSellable)} sellable · ${formatSignedEuro(forecast.expectedGrossProfit)} est. gross`,
+    invalid: false,
+  };
 }
 
 function updatePricePreview(productId, input) {
