@@ -2,6 +2,8 @@
 
 A small five-day business simulation built with plain HTML, CSS, and JavaScript. Buy stock, set prices, and see how your decisions affect cash and inventory.
 
+The first-run guide explains the loop, live price previews make the deterministic demand rule visible, and each completed day has an expandable product-by-product breakdown. Finish the five days for a gross-profit chart and a short performance debrief.
+
 ## Play locally
 
 Open `index.html` in a modern browser. The game stores the current run in that browser's local storage, so your progress stays on the same device and browser.
@@ -12,6 +14,7 @@ Open `index.html` in a modern browser. The game stores the current run in that b
 - Demand is 10 units at or below the reference price, 5 units above reference and up to twice reference, and 0 above twice reference.
 - Sales cannot exceed stock. Unsold items carry over to the next day.
 - The five-day final result is cash plus remaining stock at purchase cost, minus the starting €100.
+- Version 1 browser saves are upgraded in place when the newer detailed day history is first loaded.
 
 ## Check the business rules
 
