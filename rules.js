@@ -36,13 +36,18 @@ export function createNewRun(random = Math.random) {
   };
 }
 
-export function demandFor(price, referencePrice, fullPriceDemand = 10) {
+export function expectedDemandFor(price, referencePrice, fullPriceDemand = 10) {
   if (!Number.isSafeInteger(price) || price <= 0) throw new RangeError("Selling price must be a positive amount in cents.");
   if (!Number.isSafeInteger(referencePrice) || referencePrice <= 0) throw new RangeError("Reference price must be a positive amount in cents.");
   if (!Number.isSafeInteger(fullPriceDemand) || fullPriceDemand < 0) throw new RangeError("Daily demand must be a non-negative whole number.");
-  if (price <= referencePrice) return fullPriceDemand;
-  if (price <= referencePrice * 2) return Math.ceil(fullPriceDemand / 2);
-  return 0;
+
+  // Constant price elasticity gives a gradual response: a 10% higher price means about 17% less demand.
+  // Discounts can grow demand, but never beyond twice the event's full-price baseline.
+  return Math.min(fullPriceDemand * 2, fullPriceDemand * (referencePrice / price) ** 2);
+}
+
+export function demandFor(price, referencePrice, fullPriceDemand = 10) {
+  return Math.round(expectedDemandFor(price, referencePrice, fullPriceDemand));
 }
 
 export function campusEventFor(run, day = run.currentDay) {
@@ -53,11 +58,14 @@ export function campusEventFor(run, day = run.currentDay) {
 export function previewProduct(productId, price, stock, campusEvent = null) {
   const product = PRODUCTS.find(({ id }) => id === productId);
   if (!product) throw new RangeError("Choose a product from the menu.");
-  const demand = demandFor(price, product.referencePrice, campusEvent?.demand[productId] ?? 10);
+  const expectedDemand = expectedDemandFor(price, product.referencePrice, campusEvent?.demand[productId] ?? 10);
+  const demand = Math.round(expectedDemand);
+  const expectedSellable = Math.min(expectedDemand, stock);
   const sellable = Math.min(demand, stock);
   const revenue = sellable * price;
   const grossProfit = revenue - sellable * product.unitCost;
-  return { demand, sellable, revenue, grossProfit };
+  const expectedGrossProfit = expectedSellable * (price - product.unitCost);
+  return { demand, expectedDemand, sellable, expectedSellable, revenue, grossProfit, expectedGrossProfit };
 }
 
 export function buyStock(run, productId, quantity) {
