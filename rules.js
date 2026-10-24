@@ -1,17 +1,32 @@
 export const STARTING_CASH = 10_000;
 export const DAYS_IN_RUN = 5;
-export const STORAGE_KEY = "campus-tycoon-run-v2";
-export const LEGACY_STORAGE_KEY = "campus-tycoon-run-v1";
+export const STORAGE_KEY = "campus-tycoon-run-v3";
+export const LEGACY_STORAGE_KEYS = ["campus-tycoon-run-v2", "campus-tycoon-run-v1"];
 
 export const PRODUCTS = [
-  { id: "coffee", name: "House coffee", icon: "☕", unitCost: 200, referencePrice: 400 },
-  { id: "toastie", name: "Cheese toastie", icon: "🥪", unitCost: 300, referencePrice: 600 },
-  { id: "cookie", name: "Campus cookie", icon: "🍪", unitCost: 100, referencePrice: 200 },
+  { id: "shake", name: "Protein shake", icon: "🥤", unitCost: 250, referencePrice: 500 },
+  { id: "bar", name: "Energy bar", icon: "🍫", unitCost: 100, referencePrice: 250 },
+  { id: "shaker", name: "Reusable shaker", icon: "🏋️", unitCost: 600, referencePrice: 1_200 },
 ];
 
-export function createNewRun() {
+export const CAMPUS_EVENTS = [
+  { id: "gym-rush", name: "Gym rush", description: "The campus gym is packed after a group fitness challenge.", demand: { shake: 16, bar: 8, shaker: 6 } },
+  { id: "tournament", name: "Campus tournament", description: "Teams and spectators are stocking up before the big matches.", demand: { shake: 12, bar: 16, shaker: 12 } },
+  { id: "exam-week", name: "Exam-week reset", description: "Long library sessions make quick fuel more popular than gear.", demand: { shake: 6, bar: 18, shaker: 3 } },
+  { id: "wellness-fair", name: "Wellness fair", description: "A healthy-living fair brings new faces to the store.", demand: { shake: 18, bar: 12, shaker: 15 } },
+  { id: "rainy-day", name: "Rainy training day", description: "Indoor workouts draw a smaller but focused crowd.", demand: { shake: 10, bar: 6, shaker: 3 } },
+];
+
+export function createNewRun(random = Math.random) {
+  const eventOrder = CAMPUS_EVENTS.map(({ id }) => id);
+  for (let index = eventOrder.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [eventOrder[index], eventOrder[swapIndex]] = [eventOrder[swapIndex], eventOrder[index]];
+  }
   return {
-    version: 2,
+    version: 3,
+    catalogue: PRODUCTS.map((product) => ({ ...product })),
+    eventOrder,
     cash: STARTING_CASH,
     currentDay: 1,
     stock: Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0])),
@@ -21,18 +36,24 @@ export function createNewRun() {
   };
 }
 
-export function demandFor(price, referencePrice) {
+export function demandFor(price, referencePrice, fullPriceDemand = 10) {
   if (!Number.isSafeInteger(price) || price <= 0) throw new RangeError("Selling price must be a positive amount in cents.");
   if (!Number.isSafeInteger(referencePrice) || referencePrice <= 0) throw new RangeError("Reference price must be a positive amount in cents.");
-  if (price <= referencePrice) return 10;
-  if (price <= referencePrice * 2) return 5;
+  if (!Number.isSafeInteger(fullPriceDemand) || fullPriceDemand < 0) throw new RangeError("Daily demand must be a non-negative whole number.");
+  if (price <= referencePrice) return fullPriceDemand;
+  if (price <= referencePrice * 2) return Math.ceil(fullPriceDemand / 2);
   return 0;
 }
 
-export function previewProduct(productId, price, stock) {
+export function campusEventFor(run, day = run.currentDay) {
+  const eventId = run.eventOrder?.[day - 1];
+  return CAMPUS_EVENTS.find(({ id }) => id === eventId) ?? null;
+}
+
+export function previewProduct(productId, price, stock, campusEvent = null) {
   const product = PRODUCTS.find(({ id }) => id === productId);
   if (!product) throw new RangeError("Choose a product from the menu.");
-  const demand = demandFor(price, product.referencePrice);
+  const demand = demandFor(price, product.referencePrice, campusEvent?.demand[productId] ?? 10);
   const sellable = Math.min(demand, stock);
   const revenue = sellable * price;
   const grossProfit = revenue - sellable * product.unitCost;
@@ -70,7 +91,8 @@ export function tradeDay(run) {
   let revenue = 0;
   let costOfGoodsSold = 0;
   const items = PRODUCTS.map((product) => {
-    const demand = demandFor(run.prices[product.id], product.referencePrice);
+    const campusEvent = campusEventFor(run);
+    const demand = demandFor(run.prices[product.id], product.referencePrice, campusEvent?.demand[product.id] ?? 10);
     const stockBefore = run.stock[product.id];
     const sold = Math.min(demand, stockBefore);
     const sellingPrice = run.prices[product.id];
@@ -93,6 +115,7 @@ export function tradeDay(run) {
 
   const result = {
     day: run.currentDay,
+    eventId: campusEventFor(run)?.id,
     items,
     revenue,
     costOfGoodsSold,
@@ -112,51 +135,11 @@ export function tradeDay(run) {
 }
 
 export function migrateRun(run) {
-  if (run?.version === 2) return run;
-  if (run?.version !== 1 || !Array.isArray(run.history) || !Array.isArray(run.purchases)) return null;
-
-  const stock = Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0]));
-  const history = run.history.map((day) => {
-    const purchases = Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0]));
-    for (const purchase of run.purchases.filter((entry) => entry.day === day.day)) {
-      if (Object.hasOwn(purchases, purchase.productId)) purchases[purchase.productId] += purchase.quantity;
-    }
-
-    let revenue = 0;
-    let costOfGoodsSold = 0;
-    const items = PRODUCTS.map((product) => {
-      const previousItem = day.items.find((item) => item.productId === product.id);
-      const stockBefore = stock[product.id] + purchases[product.id];
-      const sold = previousItem?.sold ?? 0;
-      const stockAfter = stockBefore - sold;
-      stock[product.id] = stockAfter;
-      const itemRevenue = previousItem?.revenue ?? 0;
-      const itemCost = previousItem?.costOfGoodsSold ?? sold * product.unitCost;
-      revenue += itemRevenue;
-      costOfGoodsSold += itemCost;
-      return {
-        productId: product.id,
-        sellingPrice: sold > 0 ? itemRevenue / sold : run.prices[product.id],
-        demand: previousItem?.demand ?? 0,
-        stockBefore,
-        sold,
-        stockAfter,
-        revenue: itemRevenue,
-        costOfGoodsSold: itemCost,
-        grossProfit: previousItem?.grossProfit ?? itemRevenue - itemCost,
-      };
-    });
-
-    return {
-      ...day,
-      items,
-      revenue: day.revenue ?? revenue,
-      costOfGoodsSold: day.costOfGoodsSold ?? costOfGoodsSold,
-      grossProfit: day.grossProfit ?? revenue - costOfGoodsSold,
-    };
-  });
-
-  return { ...run, version: 2, history };
+  if (run?.version === 3) return run;
+  // A café run cannot be faithfully translated to the new store's stock costs and events.
+  // Preserve the old browser save under its old key and begin a clean sports-store run.
+  if (run?.version === 1 || run?.version === 2) return createNewRun();
+  return null;
 }
 
 export function stockValueAtCost(run) {
