@@ -1,6 +1,7 @@
 export const STARTING_CASH = 10_000;
 export const DAYS_IN_RUN = 5;
-export const STORAGE_KEY = "campus-tycoon-run-v1";
+export const STORAGE_KEY = "campus-tycoon-run-v2";
+export const LEGACY_STORAGE_KEY = "campus-tycoon-run-v1";
 
 export const PRODUCTS = [
   { id: "coffee", name: "House coffee", icon: "☕", unitCost: 200, referencePrice: 400 },
@@ -10,7 +11,7 @@ export const PRODUCTS = [
 
 export function createNewRun() {
   return {
-    version: 1,
+    version: 2,
     cash: STARTING_CASH,
     currentDay: 1,
     stock: Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0])),
@@ -26,6 +27,16 @@ export function demandFor(price, referencePrice) {
   if (price <= referencePrice) return 10;
   if (price <= referencePrice * 2) return 5;
   return 0;
+}
+
+export function previewProduct(productId, price, stock) {
+  const product = PRODUCTS.find(({ id }) => id === productId);
+  if (!product) throw new RangeError("Choose a product from the menu.");
+  const demand = demandFor(price, product.referencePrice);
+  const sellable = Math.min(demand, stock);
+  const revenue = sellable * price;
+  const grossProfit = revenue - sellable * product.unitCost;
+  return { demand, sellable, revenue, grossProfit };
 }
 
 export function buyStock(run, productId, quantity) {
@@ -60,12 +71,24 @@ export function tradeDay(run) {
   let costOfGoodsSold = 0;
   const items = PRODUCTS.map((product) => {
     const demand = demandFor(run.prices[product.id], product.referencePrice);
-    const sold = Math.min(demand, run.stock[product.id]);
-    const itemRevenue = sold * run.prices[product.id];
+    const stockBefore = run.stock[product.id];
+    const sold = Math.min(demand, stockBefore);
+    const sellingPrice = run.prices[product.id];
+    const itemRevenue = sold * sellingPrice;
     const itemCost = sold * product.unitCost;
     revenue += itemRevenue;
     costOfGoodsSold += itemCost;
-    return { productId: product.id, demand, sold, revenue: itemRevenue, costOfGoodsSold: itemCost, grossProfit: itemRevenue - itemCost };
+    return {
+      productId: product.id,
+      sellingPrice,
+      demand,
+      stockBefore,
+      sold,
+      stockAfter: stockBefore - sold,
+      revenue: itemRevenue,
+      costOfGoodsSold: itemCost,
+      grossProfit: itemRevenue - itemCost,
+    };
   });
 
   const result = {
@@ -86,6 +109,54 @@ export function tradeDay(run) {
     })),
     history: [...run.history, result],
   };
+}
+
+export function migrateRun(run) {
+  if (run?.version === 2) return run;
+  if (run?.version !== 1 || !Array.isArray(run.history) || !Array.isArray(run.purchases)) return null;
+
+  const stock = Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0]));
+  const history = run.history.map((day) => {
+    const purchases = Object.fromEntries(PRODUCTS.map(({ id }) => [id, 0]));
+    for (const purchase of run.purchases.filter((entry) => entry.day === day.day)) {
+      if (Object.hasOwn(purchases, purchase.productId)) purchases[purchase.productId] += purchase.quantity;
+    }
+
+    let revenue = 0;
+    let costOfGoodsSold = 0;
+    const items = PRODUCTS.map((product) => {
+      const previousItem = day.items.find((item) => item.productId === product.id);
+      const stockBefore = stock[product.id] + purchases[product.id];
+      const sold = previousItem?.sold ?? 0;
+      const stockAfter = stockBefore - sold;
+      stock[product.id] = stockAfter;
+      const itemRevenue = previousItem?.revenue ?? 0;
+      const itemCost = previousItem?.costOfGoodsSold ?? sold * product.unitCost;
+      revenue += itemRevenue;
+      costOfGoodsSold += itemCost;
+      return {
+        productId: product.id,
+        sellingPrice: sold > 0 ? itemRevenue / sold : run.prices[product.id],
+        demand: previousItem?.demand ?? 0,
+        stockBefore,
+        sold,
+        stockAfter,
+        revenue: itemRevenue,
+        costOfGoodsSold: itemCost,
+        grossProfit: previousItem?.grossProfit ?? itemRevenue - itemCost,
+      };
+    });
+
+    return {
+      ...day,
+      items,
+      revenue: day.revenue ?? revenue,
+      costOfGoodsSold: day.costOfGoodsSold ?? costOfGoodsSold,
+      grossProfit: day.grossProfit ?? revenue - costOfGoodsSold,
+    };
+  });
+
+  return { ...run, version: 2, history };
 }
 
 export function stockValueAtCost(run) {
