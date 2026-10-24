@@ -1,4 +1,4 @@
-import { DAYS_IN_RUN, LEGACY_STORAGE_KEY, PRODUCTS, STARTING_CASH, STORAGE_KEY, buyStock, createNewRun, formatEuro, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, stockValueAtCost, tradeDay } from "./rules.js";
+import { DAYS_IN_RUN, LEGACY_STORAGE_KEYS, PRODUCTS, STARTING_CASH, STORAGE_KEY, buyStock, campusEventFor, createNewRun, formatEuro, migrateRun, overallResult, parseEuroAmount, previewProduct, setPrice, stockValueAtCost, tradeDay } from "./rules.js";
 
 const $ = (selector) => document.querySelector(selector);
 const productList = $("#product-list");
@@ -6,7 +6,7 @@ let toastTimer;
 let tradePending = false;
 
 function isValidRun(run) {
-  return run?.version === 2
+  return run?.version === 3
     && Number.isSafeInteger(run.cash)
     && run.cash >= 0
     && Number.isInteger(run.currentDay)
@@ -14,6 +14,10 @@ function isValidRun(run) {
     && run.currentDay <= DAYS_IN_RUN + 1
     && Array.isArray(run.purchases)
     && Array.isArray(run.history)
+    && Array.isArray(run.eventOrder)
+    && run.eventOrder.length === DAYS_IN_RUN
+    && new Set(run.eventOrder).size === DAYS_IN_RUN
+    && PRODUCTS.every(({ id }) => run.catalogue?.some((product) => product.id === id))
     && run.history.length === run.currentDay - 1
     && PRODUCTS.every(({ id }) => Number.isSafeInteger(run.stock?.[id]) && run.stock[id] >= 0 && Number.isSafeInteger(run.prices?.[id]) && run.prices[id] > 0)
     && run.history.every((day, index) => day.day === index + 1
@@ -33,7 +37,7 @@ function isValidRun(run) {
 
 function loadRun() {
   try {
-    for (const key of [STORAGE_KEY, LEGACY_STORAGE_KEY]) {
+    for (const key of [STORAGE_KEY, ...LEGACY_STORAGE_KEYS]) {
       const saved = localStorage.getItem(key);
       if (!saved) continue;
       const parsed = JSON.parse(saved);
@@ -77,7 +81,7 @@ function priceForecast(productId, inputValue) {
   const price = parseEuroAmount(inputValue);
   if (price === null) return { text: "Enter a positive price to preview demand.", invalid: true };
   const product = PRODUCTS.find(({ id }) => id === productId);
-  const forecast = previewProduct(productId, price, run.stock[productId]);
+  const forecast = previewProduct(productId, price, run.stock[productId], campusEventFor(run));
   if (forecast.demand === 0) {
     return { text: `0 wanted at this price · demand returns at ${formatEuro(product.referencePrice * 2)} or below`, invalid: false };
   }
@@ -118,6 +122,10 @@ function updatePrice(productId, input) {
 
 function renderProducts() {
   const completed = run.currentDay > DAYS_IN_RUN;
+  const campusEvent = campusEventFor(run);
+  $("#campus-pulse").innerHTML = campusEvent
+    ? `<span class="pulse-day">DAY ${run.currentDay} · CAMPUS PULSE</span><strong>${campusEvent.name}</strong><p>${campusEvent.description}</p><small>Full-price demand today: ${PRODUCTS.map((product) => `${campusEvent.demand[product.id]} ${product.name.toLowerCase()}${campusEvent.demand[product.id] === 1 ? "" : "s"}`).join(" · ")}</small>`
+    : `<span class="pulse-day">THE WEEK IS COMPLETE</span><strong>Thanks for keeping the campus moving.</strong><p>Your five daily events are saved in the results below.</p>`;
   productList.innerHTML = PRODUCTS.map((product) => {
     const forecast = priceForecast(product.id, (run.prices[product.id] / 100).toFixed(2));
     return `
@@ -177,9 +185,10 @@ function renderHistory() {
         <td class="${item.grossProfit >= 0 ? "positive" : "negative"}">${formatSignedEuro(item.grossProfit)}</td>
       </tr>`;
     }).join("");
+    const event = day.eventId ? campusEventFor(run, day.day) : null;
     return `<details class="history-entry">
       <summary class="history-row">
-        <span class="history-day">DAY ${day.day}</span>
+        <span class="history-day">DAY ${day.day}<small>${event?.name ?? "Campus trade"}</small></span>
         <span class="history-detail"><strong>${sold} of ${demand} wanted sold</strong>${formatEuro(day.revenue)} revenue · ${formatSignedEuro(day.grossProfit)} gross</span>
         <span class="history-total ${day.grossProfit >= 0 ? "positive" : "negative"}">${formatSignedEuro(day.grossProfit)}</span>
       </summary>
@@ -216,7 +225,7 @@ function renderFinalReport() {
   const leadingProduct = productTotals.slice().sort((a, b) => b.grossProfit - a.grossProfit)[0];
   const insights = [];
   if (leadingProduct.grossProfit > 0) {
-    insights.push(`${leadingProduct.name} led the menu with ${formatSignedEuro(leadingProduct.grossProfit)} gross profit.`);
+    insights.push(`${leadingProduct.name} led the product range with ${formatSignedEuro(leadingProduct.grossProfit)} gross profit.`);
   } else if (totalSold === 0) {
     insights.push("No units sold this week. Try buying stock before opening, then price at or below the reference price to reach the highest demand tier.");
   } else {
@@ -260,7 +269,7 @@ function render() {
   resultElement.classList.toggle("positive", result >= 0);
   $("#first-run-guide").hidden = completedDays > 0;
   $("#open-badge").innerHTML = completed ? "<i></i> RUN COMPLETE" : "<i></i> NOT TRADING";
-  $("#trade-heading").textContent = completed ? "The café is closed." : "Open for the day?";
+  $("#trade-heading").textContent = completed ? "The shop is closed." : "Open for the day?";
   $("#trade-copy").textContent = completed ? "Your five trading days are complete. Review your week, then start a fresh run when you’re ready." : "Your prices are set and your stock is ready. See how the day goes.";
   const tradeButton = $("#trade-button");
   tradeButton.disabled = completed || tradePending;
@@ -294,7 +303,7 @@ $("#new-run-button").addEventListener("click", () => {
   if (!window.confirm("Start a new run? Your current cash, stock, and daily results will be replaced.")) return;
   if (persist(createNewRun())) {
     render();
-    showToast("A fresh café run is ready.");
+    showToast("A fresh Campus Fuel run is ready.");
   }
 });
 
