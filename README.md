@@ -1,20 +1,19 @@
-# Campus Tycoon: Campus Café
+# Campus Tycoon: Campus Fuel
 
-A small five-day business simulation built with plain HTML, CSS, and JavaScript. Buy stock, set prices, and see how your decisions affect cash and inventory.
-
-The first-run guide explains the loop, live price previews make the deterministic demand rule visible, and each completed day has an expandable product-by-product breakdown. Finish the five days for a gross-profit chart and a short performance debrief.
+A five-day sports nutrition store simulation built with plain HTML, CSS, and JavaScript. Buy protein shakes, energy bars, and reusable shakers; read the changing campus forecast; choose prices; and review how your decisions affect cash and inventory.
 
 ## Play locally
 
-Open `index.html` in a modern browser. The game stores the current run in that browser's local storage, so your progress stays on the same device and browser.
+Open `index.html` in a modern browser. The current catalogue, event order, and run progress are saved in that browser's local storage, so progress stays on the same device and browser.
 
 ## Rules
 
 - Start with €100 and no stock.
-- Demand is 10 units at or below the reference price, 5 units above reference and up to twice reference, and 0 above twice reference.
+- Each new run shuffles five campus events. The event order is saved, so a refresh never changes today's forecast or lets a day be replayed.
+- Every event has a product-specific full-price demand baseline. At or below the reference price, demand equals that baseline; above reference and up to twice reference, demand is half (rounded up); above twice reference, demand is zero.
 - Sales cannot exceed stock. Unsold items carry over to the next day.
 - The five-day final result is cash plus remaining stock at purchase cost, minus the starting €100.
-- Version 1 browser saves are upgraded in place when the newer detailed day history is first loaded.
+- Existing café saves are kept in their old browser storage keys; the new store starts with a fresh run because its products and event rules use a different catalogue.
 
 ## Check the business rules
 
